@@ -30,7 +30,7 @@ const CardContent = ({ children }) => (
 const Home = () => {
   const [leaderboardData, setLeaderboardData] = useState([]);
   const userEmail = localStorage.getItem("email");
-  const userName = localStorage.getItem("name");
+  // const userName = localStorage.getItem("name");
 
   useEffect(() => {
     fetch("http://localhost:5000/leaderboard")
@@ -73,7 +73,7 @@ const Home = () => {
                   {user.rank}
                 </div>
                 <div>
-                  <p className="font-medium text-gray-100">{userName}</p>
+                  <p className="font-medium text-gray-100">{user.name}</p>
                   {user.email === userEmail && (
                     <div className="text-xs text-fuchsia-400">That's you!</div>
                   )}

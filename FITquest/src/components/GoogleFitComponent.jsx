@@ -12,7 +12,7 @@ const GoogleFitComponent = () => {
 
   const login = useGoogleLogin({
     flow: 'auth-code',
-    scope: 'https://www.googleapis.com/auth/fitness.activity.read https://www.googleapis.com/auth/fitness.body.read',
+    scope: 'https://www.googleapis.com/auth/fitness.activity.read https://www.googleapis.com/auth/fitness.body.read https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
     access_type: 'offline',
     onSuccess: async (codeResponse) => {
       try {
@@ -71,92 +71,89 @@ const GoogleFitComponent = () => {
     }
   };
 
-  const saveFitnessDataToDB = async (email, steps, calories) => {
+  const saveFitnessDataToDB = async (email, steps, calories, name) => {
     try {
-      const response = await fetch('http://localhost:5000/save-fitness-data', {
-        method: 'POST',
+      const response = await fetch("http://localhost:5000/save-fitness-data", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, steps, calories }),
+        body: JSON.stringify({ email, steps, calories, name }), // Include name
       });
   
       if (!response.ok) {
-        throw new Error('Failed to save data to the database');
+        throw new Error("Failed to save data to the database");
       }
-      console.log('Fitness data saved to database');
+      console.log("Fitness data saved to database");
     } catch (err) {
-      console.error('Error saving data to DB:', err);
+      console.error("Error saving data to DB:", err);
     }
   };
+  
 
   const fetchFitnessData = async (token = accessToken) => {
     if (!token) return;
-
+  
     setLoading(true);
     try {
       const now = new Date();
-      const endTime = now.getTime() + (5.5 * 60 * 60 * 1000);
-      const startTime = endTime - (24 * 60 * 60 * 1000);
-
+      const endTime = now.getTime() + 5.5 * 60 * 60 * 1000;
+      const startTime = endTime - 24 * 60 * 60 * 1000;
+  
       const stepsResponse = await fetch(
-        'https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate',
+        "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate",
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            aggregateBy: [{
-              dataTypeName: "com.google.step_count.delta"
-            }],
+            aggregateBy: [{ dataTypeName: "com.google.step_count.delta" }],
             bucketByTime: { durationMillis: 86400000 },
             startTimeMillis: startTime,
             endTimeMillis: endTime,
           }),
         }
       );
-
+  
       if (stepsResponse.status === 401 && refreshToken) {
         const newToken = await refreshAccessToken();
         return fetchFitnessData(newToken);
       }
-
+  
       if (!stepsResponse.ok) {
         throw new Error(`HTTP error! status: ${stepsResponse.status}`);
       }
-
+  
       const caloriesResponse = await fetch(
-        'https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate',
+        "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate",
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            aggregateBy: [{
-              dataTypeName: "com.google.calories.expended"
-            }],
+            aggregateBy: [{ dataTypeName: "com.google.calories.expended" }],
             bucketByTime: { durationMillis: 86400000 },
             startTimeMillis: startTime,
             endTimeMillis: endTime,
           }),
         }
       );
-
+  
       const stepsData = await stepsResponse.json();
       const caloriesData = await caloriesResponse.json();
-
+  
       let steps = 0;
       let calories = 0;
-
+  
       if (stepsData.bucket) {
-        stepsData.bucket.forEach(bucket => {
-          bucket.dataset.forEach(dataset => {
-            dataset.point.forEach(point => {
-              point.value.forEach(value => {
+        stepsData.bucket.forEach((bucket) => {
+          bucket.dataset.forEach((dataset) => {
+            dataset.point.forEach((point) => {
+              point.value.forEach((value) => {
                 if (value.intVal) {
                   steps += value.intVal;
                 }
@@ -165,12 +162,12 @@ const GoogleFitComponent = () => {
           });
         });
       }
-
+  
       if (caloriesData.bucket) {
-        caloriesData.bucket.forEach(bucket => {
-          bucket.dataset.forEach(dataset => {
-            dataset.point.forEach(point => {
-              point.value.forEach(value => {
+        caloriesData.bucket.forEach((bucket) => {
+          bucket.dataset.forEach((dataset) => {
+            dataset.point.forEach((point) => {
+              point.value.forEach((value) => {
                 if (value.fpVal) {
                   calories += value.fpVal;
                 }
@@ -179,12 +176,23 @@ const GoogleFitComponent = () => {
           });
         });
       }
-
+  
       if (steps === 0 && calories === 0) {
-        setError('No fitness data found for the last 24 hours. If you just set up Google Fit, please wait a few hours for data to sync.');
+        setError(
+          "No fitness data found for the last 24 hours. If you just set up Google Fit, please wait a few hours for data to sync."
+        );
       } else {
-        const email = 'user@example.com'; // Replace with actual email (you can pass this from your frontend)
-        await saveFitnessDataToDB(email, steps, calories);
+        const userInfo = await fetchGoogleUserInfo(accessToken); // Contains both email and name
+        if (!userInfo) {
+          setError("Failed to fetch user info.");
+          return;
+        }
+  
+        const { email, name } = userInfo;
+        localStorage.setItem("email", email);
+        localStorage.setItem("name", name);
+  
+        await saveFitnessDataToDB(email, steps, calories, name);
         setFitnessData({
           steps: steps,
           calories: Math.round(calories),
@@ -192,15 +200,33 @@ const GoogleFitComponent = () => {
         setError(null);
         setLastUpdated(new Date());
       }
-
     } catch (err) {
-      console.error('Fetch error:', err);
+      console.error("Fetch error:", err);
       setError(`Error fetching fitness data: ${err.message}`);
     } finally {
       setLoading(false);
       setIsRefreshing(false); // Hide spinner after refresh
     }
   };
+  
+
+  const fetchGoogleUserInfo = async (accessToken) => {
+    try {
+      const response = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+  
+      const data = await response.json();
+      console.log("User Info:", data); // Contains email, name, picture, etc.
+  
+      return { email: data.email, name: data.name }; // Now returning both email and name
+    } catch (error) {
+      console.error("Error fetching user info:", error);
+      return null;
+    }
+  };
+  
+  
 
   useEffect(() => {
     if (accessToken) {

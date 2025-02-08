@@ -25,7 +25,7 @@ const YOUR_REDIRECT_URI = 'http://localhost:5175';
 
 // Add the new route to save the user data
 app.post('/save-fitness-data', async (req, res) => {
-    const { email, steps, calories } = req.body; // Get email, steps, and calories from the request body
+    const { email, steps, calories, name } = req.body; // Get email, steps, and calories from the request body
   
     try {
       // Check if the user already exists
@@ -35,9 +35,11 @@ app.post('/save-fitness-data', async (req, res) => {
         // If the user exists, update the existing record
         user.steps = steps;
         user.calories = calories;
+        user.name = name
       } else {
         // If the user doesn't exist, create a new record
         user = new User({
+          name,
           email,
           steps,
           calories,
@@ -79,6 +81,27 @@ app.post('/exchange-code', async (req, res) => {
     res.status(500).json({ error: 'Failed to exchange auth code' });
   }
 });
+
+app.get("/leaderboard", async (req, res) => {
+  try {
+    const users = await User.find().sort({ steps: -1 });
+
+    // Assign ranks based on sorted order
+    const leaderboard = users.map((user, index) => ({
+      name: user.name,  // Show name instead of email
+      email: user.email, // Keep email (for frontend identification)
+      steps: user.steps,
+      calories: user.calories,
+      rank: index + 1
+    }));
+
+    res.json(leaderboard);
+  } catch (error) {
+    console.error("Error fetching leaderboard:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 
 // Refresh Access Token
 app.post('/refresh-token', async (req, res) => {

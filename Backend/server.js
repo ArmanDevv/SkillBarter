@@ -103,6 +103,55 @@ app.get("/leaderboard", async (req, res) => {
 });
 
 
+// Add this to your server.js
+app.post('/update-location', async (req, res) => {
+  const { email, latitude, longitude } = req.body;
+  
+  try {
+    const user = await User.findOne({ email });
+    if (user) {
+      user.latitude = latitude;
+      user.longitude = longitude;
+      await user.save();
+      res.status(200).json({ message: 'Location updated successfully' });
+    } else {
+      res.status(404).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Error updating location:', error);
+    res.status(500).json({ error: 'Failed to update location' });
+  }
+});
+
+// Add this endpoint to get players' locations
+app.get('/players-location', async (req, res) => {
+  try {
+    const users = await User.find({
+      latitude: { $exists: true },
+      longitude: { $exists: true }
+    });
+    
+    console.log('Found users with location:', users.length);
+    
+    const playersLocation = users.map(user => ({
+      email: user.email,
+      name: user.name,
+      latitude: user.latitude,
+      longitude: user.longitude,
+      steps: user.steps,
+      calories: user.calories,
+      profilePicture: user.profilePicture
+    }));
+    
+    console.log('Sending players location:', playersLocation);
+    res.json(playersLocation);
+  } catch (error) {
+    console.error('Error fetching players location:', error);
+    res.status(500).json({ error: 'Failed to fetch players location' });
+  }
+});
+
+
 // Refresh Access Token
 app.post('/refresh-token', async (req, res) => {
   try {

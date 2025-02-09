@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Activity, Map } from 'lucide-react';
 import GoogleFitComponent from '../GoogleFitComponent'
+import PlayerMap from '../PlayerMap';
 
 // Custom Card Components
 const Card = ({ children, className = "" }) => (
@@ -133,9 +134,7 @@ const Home = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-[500px] rounded-xl bg-gray-800/50 flex items-center justify-center">
-              <p className="text-gray-400">Map placeholder</p>
-            </div>
+            <PlayerMap/>
           </CardContent>
         </Card>
       </div>

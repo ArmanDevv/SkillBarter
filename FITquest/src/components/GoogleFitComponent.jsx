@@ -71,6 +71,47 @@ const GoogleFitComponent = () => {
     }
   };
 
+  const updateUserLocation = async () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const email = localStorage.getItem('email');
+            console.log('Sending location update:', {
+              email,
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            });
+            
+            const response = await fetch('http://localhost:5000/update-location', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email,
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+              }),
+            });
+  
+            if (!response.ok) {
+              throw new Error('Failed to update location');
+            }
+            
+            const data = await response.json();
+            console.log('Location update response:', data);
+          } catch (error) {
+            console.error('Error updating location:', error);
+          }
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+        }
+      );
+    }
+  };
+
   const saveFitnessDataToDB = async (email, steps, calories, name) => {
     try {
       const response = await fetch("http://localhost:5000/save-fitness-data", {
@@ -228,13 +269,23 @@ const GoogleFitComponent = () => {
   
   
 
-  useEffect(() => {
-    if (accessToken) {
-      fetchFitnessData();
-      const intervalId = setInterval(fetchFitnessData, 30 * 60 * 1000); // 30 minutes interval
-      return () => clearInterval(intervalId);
-    }
-  }, [accessToken]);
+useEffect(() => {
+  if (accessToken) {
+    // Initial fetch and location update
+    fetchFitnessData();
+    updateUserLocation(); // Get and update location right away
+
+    // Set up intervals for both fitness and location updates
+    const fitnessInterval = setInterval(fetchFitnessData, 30 * 60 * 1000);
+    const locationInterval = setInterval(updateUserLocation, 60 * 1000); // Update location every minute
+
+    return () => {
+      clearInterval(fitnessInterval);
+      clearInterval(locationInterval);
+    };
+  }
+}, [accessToken]);
+
 
   const handleDisconnect = () => {
     localStorage.removeItem('googleFitToken');

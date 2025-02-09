@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Trophy, Activity, Map } from 'lucide-react';
+import { Trophy, Activity, Map, ArrowLeft} from 'lucide-react';
 import GoogleFitComponent from '../GoogleFitComponent'
 import PlayerMap from '../PlayerMap';
 import "./home.css" 
+import ProfilePage from '../ProfilePage';
 // Card components remain the same...
 const Card = ({ children, className = "" }) => (
   <div className={`rounded-xl bg-gray-900/50 border-0 backdrop-blur-md shadow-xl transition-all duration-300 ${className}`}>
@@ -30,8 +31,15 @@ const CardContent = ({ children }) => (
 
 const Home = () => {
   const [leaderboardData, setLeaderboardData] = useState([]);
+  const [showProfile, setShowProfile] = useState(false);
   const userEmail = localStorage.getItem("email");
   const scrollContainerRef = useRef(null);
+
+  const handleChallenge = (user) => {
+    console.log(`Challenging ${user.name}`);
+    // Add challenge functionality here
+  };
+  
 
   useEffect(() => {
     fetch("http://localhost:5000/leaderboard")
@@ -49,6 +57,26 @@ const Home = () => {
       })
       .catch((error) => console.error("Error fetching leaderboard:", error));
   }, [userEmail]);
+
+  if (showProfile) {
+    return (
+      <div className="min-h-screen bg-gray-950 text-gray-100 p-6">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center space-x-2">
+              <button onClick={() => setShowProfile(false)} className="text-gray-400 hover:text-gray-100">
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <CardTitle> Profile </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ProfilePage />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const renderLeaderboard = () => {
     if (leaderboardData.length === 0) {
@@ -129,7 +157,9 @@ const Home = () => {
                             ></div>
                           </div>
                         </div>
-                        <button
+                        <button 
+                            onClick={() => setShowProfile(true)}
+
                           className="px-3 py-1 text-sm font-medium text-white bg-fuchsia-600 hover:bg-fuchsia-700 rounded-lg shadow-md transition-transform hover:scale-105"
                         >
                           Profile
@@ -187,8 +217,11 @@ const Home = () => {
             <PlayerMap/>
           </CardContent>
         </Card>
+
       </div>
     </div>
+    
+
   );
 };
 

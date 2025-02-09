@@ -17,6 +17,9 @@ const userSchema = new mongoose.Schema({
     required: true,
     default: 0, // Default to 0 if no calories are provided
   },
+  latitude: Number,
+  longitude: Number,
+  profilePicture: String
 });
 
 const User = mongoose.model('User', userSchema);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Activity, Map } from 'lucide-react';
 import GoogleFitComponent from '../GoogleFitComponent'
+import PlayerMap from '../PlayerMap';
 
 // Custom Card Components
 const Card = ({ children, className = "" }) => (
@@ -88,6 +89,34 @@ const Home = () => {
                   <p className="text-sm text-gray-400">Calories</p>
                   <p className="text-lg font-semibold text-gray-100">{parseFloat(user.calories).toFixed(0)}</p>
                 </div>
+                 {/* Challenge Button */}
+              {user.email !== userEmail && (  // Hide the button for the logged-in user
+                <button
+                  onClick={() => handleChallenge(user)}
+                  className="px-3 py-1 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-md transition-transform hover:scale-105"
+                >
+                  Challenge
+                </button>
+              )}{user.email === userEmail && (
+  <div className="flex flex-col space-y-2 items-end">
+    <div className="w-22">
+      <p className="text-xs text-gray-400 mb-1">Steps Progress</p>
+      <div className="w-full bg-gray-700 rounded-full h-2">
+        <div
+          className="bg-fuchsia-500 h-2 rounded-full"
+          style={{ width: `${(user.steps / 10000) * 100}%` }} // Example: Goal of 10,000 steps
+        ></div>
+      </div>
+    </div>
+    
+    <button
+      className="px-3 py-1 text-sm font-medium text-white bg-fuchsia-600 hover:bg-fuchsia-700 rounded-lg shadow-md transition-transform hover:scale-105"
+    >
+      Profile
+    </button>
+  </div>
+)}
+
               </div>
             </div>
           </div>
@@ -133,9 +162,7 @@ const Home = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-[500px] rounded-xl bg-gray-800/50 flex items-center justify-center">
-              <p className="text-gray-400">Map placeholder</p>
-            </div>
+            <PlayerMap/>
           </CardContent>
         </Card>
       </div>

@@ -19,7 +19,9 @@ const userSchema = new mongoose.Schema({
   },
   latitude: Number,
   longitude: Number,
-  profilePicture: String
+  profilePicture: String,
+  todayTokens: { type: Number, default: 0 },
+  totalTokens: { type: Number, default: 0 }
 });
 
 const User = mongoose.model('User', userSchema);

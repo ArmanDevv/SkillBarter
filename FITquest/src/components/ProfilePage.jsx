@@ -1,16 +1,36 @@
-import React, { useState , useEffect } from 'react';
-
+import React, { useState,useEffect } from 'react';
 const ProfilePage = () => {
+  const [tokens, setTokens] = useState({ today: 0, total: 0 });
   const [stepsGoal, setStepsGoal] = useState(() => {
     return parseInt(localStorage.getItem('stepsGoal')) || 5000;
   });
-  const [tokens] = useState(150);
   const [challengeRequests] = useState([]);
   const [pastChallenges] = useState([]);
 
   useEffect(() => {
-    localStorage.setItem('stepsGoal', stepsGoal.toString());
-  }, [stepsGoal]);
+    const fetchTokens = async () => {
+      const email = localStorage.getItem('email');
+      if (email) {
+        try {
+          const response = await fetch(`http://localhost:5000/user-tokens/${email}`);
+          if (response.ok) {
+            const data = await response.json();
+            setTokens({
+              today: data.todayTokens,
+              total: data.totalTokens
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching tokens:', error);
+        }
+      }
+    };
+
+    fetchTokens();
+    // Fetch tokens every minute to keep them updated
+    const interval = setInterval(fetchTokens, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Custom Card component
   const Card = ({ children, className = '' }) => (
@@ -28,13 +48,27 @@ const ProfilePage = () => {
           {/* Tokens Card */}
           <Card>
             <h2 className="text-xl font-semibold mb-4">Tokens Earned</h2>
-            <div className="flex items-center">
-              <div className="h-16 w-16 bg-purple-600 rounded-full flex items-center justify-center">
-                <span className="text-2xl">🏆</span>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="h-16 w-16 bg-purple-600 rounded-full flex items-center justify-center">
+                    <span className="text-2xl">🏆</span>
+                  </div>
+                  <div className="ml-4">
+                    <span className="text-3xl font-bold">{tokens.today}</span>
+                    <p className="text-gray-400">Today's Tokens</p>
+                  </div>
+                </div>
               </div>
-              <div className="ml-4">
-                <span className="text-3xl font-bold">{tokens}</span>
-                <p className="text-gray-400">Total Tokens</p>
+              <div className="pt-4 border-t border-gray-800">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">Total Tokens Earned</span>
+                  <span className="text-2xl font-bold">{tokens.total}</span>
+                </div>
+              </div>
+              <div className="text-sm text-gray-500">
+                <p>• Earn 10 tokens per 1,000 steps</p>
+                <p>• Earn 10 tokens per 500 calories burned</p>
               </div>
             </div>
           </Card>

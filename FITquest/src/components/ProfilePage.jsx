@@ -4,7 +4,7 @@ const ProfilePage = () => {
   const [stepsGoal, setStepsGoal] = useState(() => {
     return parseInt(localStorage.getItem('stepsGoal')) || 5000;
   });
-  const [challengeRequests] = useState([]);
+  const [challengeRequests, setChallengeRequests] = useState([]);
   const [pastChallenges] = useState([]);
 
   useEffect(() => {
@@ -25,12 +25,34 @@ const ProfilePage = () => {
         }
       }
     };
-
+  
+    const fetchChallenges = async () => {
+      const email = localStorage.getItem('email');
+      if (email) {
+        try {
+          const response = await fetch(`http://localhost:5000/incoming-challenges/${email}`);
+          if (response.ok) {
+            const challenges = await response.json();
+            setChallengeRequests(challenges);
+          }
+        } catch (error) {
+          console.error('Error fetching challenges:', error);
+        }
+      }
+    };
+  
     fetchTokens();
-    // Fetch tokens every minute to keep them updated
-    const interval = setInterval(fetchTokens, 60000);
+    fetchChallenges();
+  
+    // Fetch tokens and challenges every minute to keep them updated
+    const interval = setInterval(() => {
+      fetchTokens();
+      fetchChallenges();
+    }, 60000);
+  
     return () => clearInterval(interval);
   }, []);
+  
 
   // Custom Card component
   const Card = ({ children, className = '' }) => (
@@ -109,7 +131,7 @@ const ProfilePage = () => {
               <div className="space-y-4">
                 {challengeRequests.map((request) => (
                   <div key={request.id} className="flex items-center justify-between">
-                    <div>{request.challenger}</div>
+                    <div>Hey!! You got a {request.challengeType} challenge from {request.challenger}.</div>
                     <div className="flex gap-2">
                       <button className="px-4 py-2 bg-purple-600 rounded-lg">Accept</button>
                       <button className="px-4 py-2 bg-gray-700 rounded-lg">Decline</button>

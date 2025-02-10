@@ -40,9 +40,29 @@ const Home = () => {
   };
 
   const handleChallenge = (user) => {
-    console.log(`Challenging ${user.name}`);
-    // Add challenge functionality here
+  const challengerEmail = localStorage.getItem("email");
+  const challengeData = {
+    challenger: challengerEmail,
+    recipient: user.email,
+    challengeType: "steps",  // You can customize this
+    date: new Date().toISOString()
   };
+
+  fetch("http://localhost:5000/challenge", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(challengeData),
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log("Challenge sent successfully:", data);
+    alert(`Challenge sent to ${user.name}!`);
+  })
+  .catch(error => {
+    console.error("Error sending challenge:", error);
+  });
+};
+
   
 
   useEffect(() => {
@@ -56,7 +76,7 @@ const Home = () => {
         const userIndex = data.findIndex(user => user.email === userEmail);
         if (userIndex !== -1 && scrollContainerRef.current) {
           const itemHeight = 96; // Height of each player card (adjust if needed)
-          scrollContainerRef.current.scrollTop = Math.max(0, (userIndex - 1) * itemHeight);
+          scrollContainerRef.current.scrollTop = Math.max(0, (userIndex-1) * itemHeight);
         }
       })
       .catch((error) => console.error("Error fetching leaderboard:", error));

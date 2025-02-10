@@ -3,6 +3,8 @@ import User from "./User.js";
 import cors from "cors";
 import fetch from "node-fetch";
 import mongoose from 'mongoose';
+import Challenge from "./Challenge.js";
+
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -207,5 +209,36 @@ app.post('/refresh-token', async (req, res) => {
     res.status(500).json({ error: 'Failed to refresh token' });
   }
 });
+app.post('/challenge', async (req, res) => {
+  const { challenger, recipient, challengeType, date } = req.body;
+
+  try {
+    const newChallenge = new Challenge({
+      challenger,
+      recipient,
+      challengeType,
+      date
+    });
+
+    await newChallenge.save();
+    res.status(201).json({ message: 'Challenge created successfully!', challenge: newChallenge });
+  } catch (error) {
+    console.error('Error creating challenge:', error);
+    res.status(500).json({ error: 'Failed to create challenge' });
+  }
+});
+// Route to get incoming challenges for a specific user
+app.get('/incoming-challenges/:email', async (req, res) => {
+  const { email } = req.params;
+
+  try {
+    const challenges = await Challenge.find({ recipient: email, status: 'pending' });
+    res.status(200).json(challenges);
+  } catch (error) {
+    console.error('Error fetching incoming challenges:', error);
+    res.status(500).json({ error: 'Failed to fetch incoming challenges' });
+  }
+});
+
 
 app.listen(5000, () => console.log('Server running on port 5000'));

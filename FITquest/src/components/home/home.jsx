@@ -35,6 +35,10 @@ const Home = () => {
   const userEmail = localStorage.getItem("email");
   const scrollContainerRef = useRef(null);
 
+  const getStepsGoal = () => {
+    return parseInt(localStorage.getItem('stepsGoal')) || 5000;
+  };
+
   const handleChallenge = (user) => {
     console.log(`Challenging ${user.name}`);
     // Add challenge functionality here
@@ -88,93 +92,93 @@ const Home = () => {
     }
 
     return (
-      <div className="relative h-[288px]"> {/* Fixed height for exactly 3 items */}
-        {/* Gradient overlays to indicate scrollable content */}
+      <div className="relative h-[288px]">
         <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-gray-900 to-transparent z-10 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-gray-900 to-transparent z-10 pointer-events-none"></div>
         
-        {/* Scrollable container */}
         <div 
           ref={scrollContainerRef}
           className="h-full overflow-y-auto overflow-x-hidden hide-scrollbar"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           <div className="space-y-2">
-            {leaderboardData.map((user) => (
-              <div
-                key={user.email}
-                className={`
-                  relative p-4 rounded-xl backdrop-blur-sm transition-all duration-300
-                  ${user.email === userEmail 
-                    ? "bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 shadow-lg hover:shadow-fuchsia-500/20" 
-                    : "bg-gray-900/40 hover:bg-gray-900/50"}
-                  hover:transform hover:scale-102 cursor-pointer
-                `}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className={`
-                      w-8 h-8 rounded-full flex items-center justify-center text-sm
-                      ${user.rank <= 3 ? 'bg-gradient-to-r from-amber-400 to-yellow-600 text-black' : 'bg-gray-800'}
-                    `}>
-                      {user.rank}
+            {leaderboardData.map((user) => {
+              const stepsGoal = user.email === userEmail ? getStepsGoal() : 10000;
+              return (
+                <div
+                  key={user.email}
+                  className={`
+                    relative p-4 rounded-xl backdrop-blur-sm transition-all duration-300
+                    ${user.email === userEmail 
+                      ? "bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 shadow-lg hover:shadow-fuchsia-500/20" 
+                      : "bg-gray-900/40 hover:bg-gray-900/50"}
+                    hover:transform hover:scale-102 cursor-pointer
+                  `}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className={`
+                        w-8 h-8 rounded-full flex items-center justify-center text-sm
+                        ${user.rank <= 3 ? 'bg-gradient-to-r from-amber-400 to-yellow-600 text-black' : 'bg-gray-800'}
+                      `}>
+                        {user.rank}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-100">{user.name}</p>
+                        {user.email === userEmail && (
+                          <div className="text-xs text-fuchsia-400">That's you!</div>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-100">{user.name}</p>
+                    <div className="flex items-center space-x-6">
+                      <div className="text-right">
+                        <p className="text-sm text-gray-400">Steps</p>
+                        <p className="text-lg font-semibold text-gray-100">{user.steps.toLocaleString()}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-400">Calories</p>
+                        <p className="text-lg font-semibold text-gray-100">{parseFloat(user.calories).toFixed(0)}</p>
+                      </div>
+                      {user.email !== userEmail && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleChallenge(user);
+                          }}
+                          className="px-3 py-1 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-md transition-transform hover:scale-105"
+                        >
+                          Challenge
+                        </button>
+                      )}
                       {user.email === userEmail && (
-                        <div className="text-xs text-fuchsia-400">That's you!</div>
+                        <div className="flex flex-col space-y-2 items-end">
+                          <div className="w-22">
+                            <p className="text-xs text-gray-400 mb-1">Steps Progress</p>
+                            <div className="w-full bg-gray-700 rounded-full h-2">
+                              <div
+                                className="bg-fuchsia-500 h-2 rounded-full"
+                                style={{ width: `${Math.min((user.steps / stepsGoal) * 100, 100)}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => setShowProfile(true)}
+                            className="px-3 py-1 text-sm font-medium text-white bg-fuchsia-600 hover:bg-fuchsia-700 rounded-lg shadow-md transition-transform hover:scale-105"
+                          >
+                            Profile
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-6">
-                    <div className="text-right">
-                      <p className="text-sm text-gray-400">Steps</p>
-                      <p className="text-lg font-semibold text-gray-100">{user.steps.toLocaleString()}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-gray-400">Calories</p>
-                      <p className="text-lg font-semibold text-gray-100">{parseFloat(user.calories).toFixed(0)}</p>
-                    </div>
-                    {user.email !== userEmail && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleChallenge(user);
-                        }}
-                        className="px-3 py-1 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-md transition-transform hover:scale-105"
-                      >
-                        Challenge
-                      </button>
-                    )}
-                    {user.email === userEmail && (
-                      <div className="flex flex-col space-y-2 items-end">
-                        <div className="w-22">
-                          <p className="text-xs text-gray-400 mb-1">Steps Progress</p>
-                          <div className="w-full bg-gray-700 rounded-full h-2">
-                            <div
-                              className="bg-fuchsia-500 h-2 rounded-full"
-                              style={{ width: `${(user.steps / 10000) * 100}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                        <button 
-                            onClick={() => setShowProfile(true)}
-
-                          className="px-3 py-1 text-sm font-medium text-white bg-fuchsia-600 hover:bg-fuchsia-700 rounded-lg shadow-md transition-transform hover:scale-105"
-                        >
-                          Profile
-                        </button>
-                      </div>
-                    )}
-                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
-    );
-  };
+    );  
+};
 
   // Rest of the component remains the same...
   return (

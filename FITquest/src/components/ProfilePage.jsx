@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState , useEffect } from 'react';
 
 const ProfilePage = () => {
-  const [stepsGoal, setStepsGoal] = useState(5000);
+  const [stepsGoal, setStepsGoal] = useState(() => {
+    return parseInt(localStorage.getItem('stepsGoal')) || 5000;
+  });
   const [tokens] = useState(150);
   const [challengeRequests] = useState([]);
   const [pastChallenges] = useState([]);
+
+  useEffect(() => {
+    localStorage.setItem('stepsGoal', stepsGoal.toString());
+  }, [stepsGoal]);
 
   // Custom Card component
   const Card = ({ children, className = '' }) => (

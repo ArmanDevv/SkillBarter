@@ -24,35 +24,67 @@ const YOUR_GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const YOUR_REDIRECT_URI = 'http://localhost:5175';
 
 // Add the new route to save the user data
+// Modify the save-fitness-data endpoint in server.js
 app.post('/save-fitness-data', async (req, res) => {
-    const { email, steps, calories, name } = req.body; // Get email, steps, and calories from the request body
-  
-    try {
-      // Check if the user already exists
-      let user = await User.findOne({ email });
-  
-      if (user) {
-        // If the user exists, update the existing record
-        user.steps = steps;
-        user.calories = calories;
-        user.name = name
-      } else {
-        // If the user doesn't exist, create a new record
-        user = new User({
-          name,
-          email,
-          steps,
-          calories,
-        });
+  const { email, steps, calories, name } = req.body;
+
+  try {
+    let user = await User.findOne({ email });
+    
+    // Calculate tokens
+    const stepsTokens = Math.floor(steps / 1000) * 10;
+    const caloriesTokens = Math.floor(calories / 500) * 10;
+    const todayTokens = stepsTokens + caloriesTokens;
+
+    if (user) {
+      // Update existing user
+      const oldTodayTokens = user.todayTokens || 0;
+      user.steps = steps;
+      user.calories = calories;
+      user.name = name;
+      user.todayTokens = todayTokens;
+      
+      // Only add to totalTokens if today's tokens have increased
+      if (todayTokens > oldTodayTokens) {
+        user.totalTokens = (user.totalTokens || 0) + (todayTokens - oldTodayTokens);
       }
-  
-      // Save the user data in MongoDB
-      await user.save();
-  
-      res.status(200).json({ message: 'User data saved successfully!' });
+    } else {
+      // Create new user
+      user = new User({
+        name,
+        email,
+        steps,
+        calories,
+        todayTokens,
+        totalTokens: todayTokens
+      });
+    }
+
+    await user.save();
+    res.status(200).json({ 
+      message: 'User data saved successfully!',
+      todayTokens,
+      totalTokens: user.totalTokens
+    });
+  } catch (error) {
+    console.error('Error saving fitness data:', error);
+    res.status(500).json({ error: 'Failed to save fitness data' });
+  }
+});
+
+  app.get('/user-tokens/:email', async (req, res) => {
+    try {
+      const user = await User.findOne({ email: req.params.email });
+      if (user) {
+        res.json({
+          todayTokens: user.todayTokens || 0,
+          totalTokens: user.totalTokens || 0
+        });
+      } else {
+        res.status(404).json({ error: 'User not found' });
+      }
     } catch (error) {
-      console.error('Error saving fitness data:', error);
-      res.status(500).json({ error: 'Failed to save fitness data' });
+      res.status(500).json({ error: 'Failed to fetch tokens' });
     }
   });
   

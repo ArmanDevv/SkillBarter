@@ -39,47 +39,75 @@ const Home = () => {
     return parseInt(localStorage.getItem('stepsGoal')) || 5000;
   };
 
-  const handleChallenge = (user) => {
-  const challengerEmail = localStorage.getItem("email");
-  const challengeData = {
-    challenger: challengerEmail,
-    recipient: user.email,
-    challengeType: "steps",  // You can customize this
-    date: new Date().toISOString()
+  const handleChallenge = async (user) => {
+    const challengerEmail = localStorage.getItem("email");
+    const challengeData = {
+      challenger: challengerEmail,
+      recipient: user.email,
+      challengeType: "steps",
+      date: new Date().toISOString()
+    };
+  
+    try {
+      const response = await fetch("http://localhost:5000/challenge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(challengeData),
+      });
+      const data = await response.json();
+      
+      if (response.ok) {
+        // Update local state to show challenge pending
+        const updatedLeaderboardData = leaderboardData.map(player => {
+          if (player.email === user.email) {
+            return { ...player, challengePending: true };
+          }
+          return player;
+        });
+        setLeaderboardData(updatedLeaderboardData);
+      }
+    } catch (error) {
+      console.error("Error sending challenge:", error);
+    }
   };
-
-  fetch("http://localhost:5000/challenge", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(challengeData),
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log("Challenge sent successfully:", data);
-    alert(`Challenge sent to ${user.name}!`);
-  })
-  .catch(error => {
-    console.error("Error sending challenge:", error);
-  });
-};
 
   
 
   useEffect(() => {
-    fetch("http://localhost:5000/leaderboard")
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Fetched leaderboard data:", data);
-        setLeaderboardData(data);
+    const fetchLeaderboardAndChallenges = async () => {
+      try {
+        // Fetch leaderboard data
+        const leaderboardRes = await fetch("http://localhost:5000/leaderboard");
+        const leaderboardData = await leaderboardRes.json();
         
-        // Find user's position and scroll to it
-        const userIndex = data.findIndex(user => user.email === userEmail);
+        // Fetch pending challenges
+        const challengesRes = await fetch(`http://localhost:5000/pending-challenges/${localStorage.getItem("email")}`);
+        const pendingChallenges = await challengesRes.json();
+        
+        // Combine the data
+        const updatedLeaderboardData = leaderboardData.map(user => ({
+          ...user,
+          challengePending: pendingChallenges.some(
+            challenge => 
+              (challenge.challenger === localStorage.getItem("email") && challenge.recipient === user.email) ||
+              (challenge.recipient === localStorage.getItem("email") && challenge.challenger === user.email)
+          )
+        }));
+        
+        setLeaderboardData(updatedLeaderboardData);
+        
+        // Scroll to user's position
+        const userIndex = updatedLeaderboardData.findIndex(user => user.email === userEmail);
         if (userIndex !== -1 && scrollContainerRef.current) {
-          const itemHeight = 96; // Height of each player card (adjust if needed)
+          const itemHeight = 96;
           scrollContainerRef.current.scrollTop = Math.max(0, (userIndex-1) * itemHeight);
         }
-      })
-      .catch((error) => console.error("Error fetching leaderboard:", error));
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+  
+    fetchLeaderboardAndChallenges();
   }, [userEmail]);
 
   if (showProfile) {
@@ -160,16 +188,21 @@ const Home = () => {
                         <p className="text-lg font-semibold text-gray-100">{parseFloat(user.calories).toFixed(0)}</p>
                       </div>
                       {user.email !== userEmail && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleChallenge(user);
-                          }}
-                          className="px-3 py-1 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-md transition-transform hover:scale-105"
-                        >
-                          Challenge
-                        </button>
-                      )}
+  <button
+    onClick={(e) => {
+      e.stopPropagation();
+      handleChallenge(user);
+    }}
+    disabled={user.challengePending}
+    className={`px-3 py-1 text-sm font-medium text-white rounded-lg shadow-md transition-transform hover:scale-105 ${
+      user.challengePending 
+        ? 'bg-gray-600 cursor-not-allowed'
+        : 'bg-blue-600 hover:bg-blue-700'
+    }`}
+  >
+    {user.challengePending ? 'Challenge Pending' : 'Challenge'}
+  </button>
+)}
                       {user.email === userEmail && (
                         <div className="flex flex-col space-y-2 items-end">
                           <div className="w-22">

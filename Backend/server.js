@@ -213,20 +213,56 @@ app.post('/challenge', async (req, res) => {
   const { challenger, recipient, challengeType, date } = req.body;
 
   try {
+    // Check if there's already a pending challenge between these users
+    const existingChallenge = await Challenge.findOne({
+      $or: [
+        { challenger, recipient, status: 'pending' },
+        { challenger: recipient, recipient: challenger, status: 'pending' }
+      ]
+    });
+
+    if (existingChallenge) {
+      return res.status(400).json({ 
+        error: 'A pending challenge already exists between these users' 
+      });
+    }
+
     const newChallenge = new Challenge({
       challenger,
       recipient,
       challengeType,
-      date
+      date,
+      status: 'pending'
     });
 
     await newChallenge.save();
-    res.status(201).json({ message: 'Challenge created successfully!', challenge: newChallenge });
+    res.status(201).json({ 
+      message: 'Challenge created successfully!', 
+      challenge: newChallenge 
+    });
   } catch (error) {
     console.error('Error creating challenge:', error);
     res.status(500).json({ error: 'Failed to create challenge' });
   }
 });
+
+app.get('/pending-challenges/:email', async (req, res) => {
+  const { email } = req.params;
+
+  try {
+    const pendingChallenges = await Challenge.find({
+      $or: [
+        { challenger: email, status: 'pending' },
+        { recipient: email, status: 'pending' }
+      ]
+    });
+    res.json(pendingChallenges);
+  } catch (error) {
+    console.error('Error fetching pending challenges:', error);
+    res.status(500).json({ error: 'Failed to fetch pending challenges' });
+  }
+});
+
 // Route to get incoming challenges for a specific user
 app.get('/incoming-challenges/:email', async (req, res) => {
   const { email } = req.params;

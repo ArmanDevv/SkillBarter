@@ -1,5 +1,5 @@
 import React from 'react';
-import logo from '../assets/skill.png';
+import logo from '../assets/fitquest.png';
 
 
 const Navbar = () => {

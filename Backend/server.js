@@ -210,7 +210,7 @@ app.post('/refresh-token', async (req, res) => {
   }
 });
 app.post('/challenge', async (req, res) => {
-  const { challenger, recipient, challengeType, date } = req.body;
+  const { challenger, recipient, challengeType, date ,steps , tokens } = req.body;
 
   try {
     // Check if there's already a pending challenge between these users
@@ -232,6 +232,8 @@ app.post('/challenge', async (req, res) => {
       recipient,
       challengeType,
       date,
+      steps,
+      tokens,
       status: 'pending'
     });
 

@@ -5,7 +5,12 @@ const ProfilePage = () => {
     return parseInt(localStorage.getItem('stepsGoal')) || 5000;
   });
   const [challengeRequests, setChallengeRequests] = useState([]);
-  const [pastChallenges] = useState([]);
+  const [pastChallenges, setPastChallenges] = useState([]);
+
+  const handleAccept = (challenge) => {
+    setPastChallenges(prev => [...prev, { ...challenge, status: 'Accepted' }]);
+    setChallengeRequests(prev => prev.filter(req => req.id !== challenge.id));
+  };
 
   useEffect(() => {
     const fetchTokens = async () => {
@@ -131,9 +136,9 @@ const ProfilePage = () => {
               <div className="space-y-4">
                 {challengeRequests.map((request) => (
                   <div key={request.id} className="flex items-center justify-between">
-                    <div>Hey!! You got a {request.challengeType} challenge from {request.challenger}.</div>
+                    <div>Heyy!! You are challenged <br/> Challenger : {request.challenger} <br/> Steps : {request.steps} <br/> Tokens on Stake : {request.tokens} <br/> Challenge Date : {request.date.split('T')[0]}</div>
                     <div className="flex gap-2">
-                      <button className="px-4 py-2 bg-purple-600 rounded-lg">Accept</button>
+                      <button onClick={() => handleAccept(request)} className="px-4 py-2 bg-purple-600 rounded-lg">Accept</button>
                       <button className="px-4 py-2 bg-gray-700 rounded-lg">Decline</button>
                     </div>
                   </div>
@@ -156,8 +161,10 @@ const ProfilePage = () => {
                   <div key={challenge.id} className="p-4 bg-gray-800 rounded-lg">
                     <div className="flex justify-between items-center">
                       <div>
-                        <h3 className="font-semibold">{challenge.title}</h3>
-                        <p className="text-sm text-gray-400">{challenge.date}</p>
+                      <p>You Accepted the challenge by {challenge.challenger}</p>
+                        <h3 className="font-semibold">Steps : {challenge.steps}</h3>
+                        <h3 className="font-semibold">Tokens on stake : {challenge.tokens}</h3>
+                        <p className="text-sm text-gray-400">Challenge On : {challenge.date}</p>
                       </div>
                       <span className={`px-3 py-1 rounded-full text-sm ${
                         challenge.status === 'completed' ? 'bg-green-900 text-green-300' : 

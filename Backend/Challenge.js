@@ -6,6 +6,8 @@ const challengeSchema = new mongoose.Schema({
   recipient: { type: String, required: true },  // recipient's email
   challengeType: { type: String, required: true }, // e.g., 'steps'
   date: { type: Date, default: Date.now },
+  steps : {type : Number , required : true} ,
+  tokens : {type : Number , required : true},
   status: { 
     type: String, 
     enum: ['pending', 'accepted', 'declined', 'completed'],

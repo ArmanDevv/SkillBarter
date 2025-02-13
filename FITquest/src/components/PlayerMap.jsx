@@ -16,7 +16,15 @@ const PlayerMap = () => {
 
   // Center the map on the first player's location or use a default
   const getMapCenter = () => {
-    if (players.length > 0) {
+    const loggedInEmail = localStorage.getItem("email"); // Get email from local storage
+    const loggedInUser = players.find(player => player.email === loggedInEmail); // Find user in players list
+
+  if (loggedInUser) {
+    return {
+      lat: Number(loggedInUser.latitude),
+      lng: Number(loggedInUser.longitude)
+    };
+  } else if (players.length > 0) {
       return {
         lat: players[0].latitude,
         lng: players[0].longitude
@@ -69,12 +77,12 @@ const PlayerMap = () => {
             mapTypeControl: false,
           }}
         >
-          {players.map((player) => (
+          {players.map((player,index) => (
             <Marker
               key={player.email}
               position={{
-                lat: Number(player.latitude),
-                lng: Number(player.longitude)
+                lat: Number(player.latitude) + index * 0.00001,
+                lng: Number(player.longitude) + index * 0.00001
               }}
               onClick={() => setSelectedPlayer(player)}
               // Temporarily use a default marker until we get profile pictures working

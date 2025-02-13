@@ -4,6 +4,9 @@ import GoogleFitComponent from '../GoogleFitComponent'
 import PlayerMap from '../PlayerMap';
 import "./home.css" 
 import ProfilePage from '../ProfilePage';
+import ChallengeModal from '../ChallengeModal';
+
+
 // Card components remain the same...
 const Card = ({ children, className = "" }) => (
   <div className={`rounded-xl bg-gray-900/50 border-0 backdrop-blur-md shadow-xl transition-all duration-300 ${className}`}>
@@ -34,43 +37,55 @@ const Home = () => {
   const [showProfile, setShowProfile] = useState(false);
   const userEmail = localStorage.getItem("email");
   const scrollContainerRef = useRef(null);
+  const [isChallengeModalOpen, setIsChallengeModalOpen] = useState(false);
+const [selectedUser, setSelectedUser] = useState(null);
+const [challengeDetails, setChallengeDetails] = useState({
+  date: '',
+  steps: '',
+  tokens: ''
+});
+
 
   const getStepsGoal = () => {
     return parseInt(localStorage.getItem('stepsGoal')) || 5000;
   };
 
-  const handleChallenge = async (user) => {
+  const handleChallenge = (user) => {
+    setSelectedUser(user);
+    setIsChallengeModalOpen(true);
+  };
+  
+
+  const submitChallenge = async (details) => {
     const challengerEmail = localStorage.getItem("email");
     const challengeData = {
       challenger: challengerEmail,
-      recipient: user.email,
+      recipient: selectedUser.email,
       challengeType: "steps",
-      date: new Date().toISOString()
+      date: details.date,
+      steps: parseInt(details.steps),
+      tokens: parseInt(details.tokens)
     };
-  
+    console.log('challenge is for' + challengeData.steps)
     try {
       const response = await fetch("http://localhost:5000/challenge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(challengeData),
       });
-      const data = await response.json();
-      
+  
       if (response.ok) {
-        // Update local state to show challenge pending
-        const updatedLeaderboardData = leaderboardData.map(player => {
-          if (player.email === user.email) {
-            return { ...player, challengePending: true };
-          }
-          return player;
-        });
+        const updatedLeaderboardData = leaderboardData.map(player => 
+          player.email === selectedUser.email ? { ...player, challengePending: true } : player
+        );
         setLeaderboardData(updatedLeaderboardData);
+        setIsChallengeModalOpen(false); // Close the modal
       }
     } catch (error) {
       console.error("Error sending challenge:", error);
     }
   };
-
+  
   
 
   useEffect(() => {
@@ -200,7 +215,7 @@ const Home = () => {
         : 'bg-blue-600 hover:bg-blue-700'
     }`}
   >
-    {user.challengePending ? 'Challenge Pending' : 'Challenge'}
+    {user.challengePending ?( <>Challenge <br/> Pending</> ): ('Challenge')}
   </button>
 )}
                       {user.email === userEmail && (
@@ -276,6 +291,13 @@ const Home = () => {
         </Card>
 
       </div>
+      <ChallengeModal 
+  isOpen={isChallengeModalOpen} 
+  onClose={() => setIsChallengeModalOpen(false)} 
+  onSubmit={submitChallenge} 
+  selectedUser={selectedUser} 
+/>
+
     </div>
     
 

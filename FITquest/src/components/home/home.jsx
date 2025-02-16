@@ -50,7 +50,7 @@ const [challengeDetails, setChallengeDetails] = useState({
     return parseInt(localStorage.getItem('stepsGoal')) || 5000;
   };
 
-  const handleChallenge = (user) => {
+  const handleChallenge = async (user) => {
     setSelectedUser(user);
     setIsChallengeModalOpen(true);
   };
@@ -95,24 +95,28 @@ const [challengeDetails, setChallengeDetails] = useState({
         const leaderboardRes = await fetch("http://localhost:5000/leaderboard");
         const leaderboardData = await leaderboardRes.json();
         
-        // Fetch pending challenges
-        const challengesRes = await fetch(`http://localhost:5000/pending-challenges/${localStorage.getItem("email")}`);
+        // Fetch all challenges
+        const email = localStorage.getItem("email");
+        const challengesRes = await fetch(`http://localhost:5000/pending-challenges/${email}`);
         const pendingChallenges = await challengesRes.json();
         
-        // Combine the data
-        const updatedLeaderboardData = leaderboardData.map(user => ({
-          ...user,
-          challengePending: pendingChallenges.some(
-            challenge => 
-              (challenge.challenger === localStorage.getItem("email") && challenge.recipient === user.email) ||
-              (challenge.recipient === localStorage.getItem("email") && challenge.challenger === user.email)
-          )
-        }));
+        // Combine the data and update challenge status
+        const updatedLeaderboardData = leaderboardData.map(user => {
+          const challenge = pendingChallenges.find(
+            c => (c.challenger === email && c.recipient === user.email) ||
+                 (c.recipient === email && c.challenger === user.email)
+          );
+          
+          return {
+            ...user,
+            challengeStatus: challenge ? challenge.status : null
+          };
+        });
         
         setLeaderboardData(updatedLeaderboardData);
         
         // Scroll to user's position
-        const userIndex = updatedLeaderboardData.findIndex(user => user.email === userEmail);
+        const userIndex = updatedLeaderboardData.findIndex(user => user.email === email);
         if (userIndex !== -1 && scrollContainerRef.current) {
           const itemHeight = 96;
           scrollContainerRef.current.scrollTop = Math.max(0, (userIndex-1) * itemHeight);
@@ -123,6 +127,10 @@ const [challengeDetails, setChallengeDetails] = useState({
     };
   
     fetchLeaderboardAndChallenges();
+    
+    // Set up polling to refresh data
+    const interval = setInterval(fetchLeaderboardAndChallenges, 30000);
+    return () => clearInterval(interval);
   }, [userEmail]);
 
   if (showProfile) {
@@ -208,14 +216,18 @@ const [challengeDetails, setChallengeDetails] = useState({
       e.stopPropagation();
       handleChallenge(user);
     }}
-    disabled={user.challengePending}
+    disabled={user.challengeStatus === 'pending' || user.challengeStatus === 'accepted'}
     className={`px-3 py-1 text-sm font-medium text-white rounded-lg shadow-md transition-transform hover:scale-105 ${
-      user.challengePending 
+      user.challengeStatus === 'pending' 
         ? 'bg-gray-600 cursor-not-allowed'
+        : user.challengeStatus === 'accepted'
+        ? 'bg-green-600 cursor-not-allowed'
         : 'bg-blue-600 hover:bg-blue-700'
     }`}
   >
-    {user.challengePending ?( <>Challenge <br/> Pending</> ): ('Challenge')}
+    {user.challengeStatus === 'pending' ? 'Challenge Pending' :
+     user.challengeStatus === 'accepted' ? 'Challenge Accepted' :
+     'Challenge'}
   </button>
 )}
                       {user.email === userEmail && (

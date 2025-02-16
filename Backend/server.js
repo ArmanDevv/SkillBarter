@@ -290,7 +290,7 @@ app.get('/upcoming-challenges/:email', async (req, res) => {
 // Accept a challenge
 // Accept a challenge (Fixed)
 app.post('/accept-challenge/:id', async (req, res) => {
-  const { id } = req.params; // Get ID from URL parameter
+  const { id } = req.params;
 
   try {
     const challenge = await Challenge.findById(id);
@@ -299,17 +299,197 @@ app.post('/accept-challenge/:id', async (req, res) => {
       return res.status(404).json({ error: 'Challenge not found' });
     }
 
-    // Update challenge status to 'Accepted'
+    // Update challenge status to 'accepted'
     challenge.status = 'accepted';
     await challenge.save();
 
-    res.json({ message: 'Challenge accepted successfully!', challenge });
+    // Fetch updated pending challenges for the challenger
+    const pendingChallenges = await Challenge.find({
+      $or: [
+        { challenger: challenge.challenger, status: 'pending' },
+        { recipient: challenge.challenger, status: 'pending' }
+      ]
+    });
+
+    res.json({ 
+      message: 'Challenge accepted successfully!', 
+      challenge,
+      pendingChallenges
+    });
   } catch (error) {
     console.error('Error accepting challenge:', error);
     res.status(500).json({ error: 'Failed to accept challenge' });
   }
 });
 
+app.post('/update-challenge-steps', async (req, res) => {
+  const { challengeId, userEmail, currentSteps } = req.body;
+  
+  try {
+    const challenge = await Challenge.findById(challengeId);
+    if (!challenge) {
+      return res.status(404).json({ error: 'Challenge not found' });
+    }
+
+    // Update steps for the appropriate user
+    if (userEmail === challenge.challenger) {
+      challenge.challengerSteps = currentSteps;
+    } else if (userEmail === challenge.recipient) {
+      challenge.recipientSteps = currentSteps;
+    }
+
+    // Check if either user has completed the challenge
+    const targetSteps = challenge.steps;
+    const challengeDate = new Date(challenge.date).setHours(0, 0, 0, 0);
+    const today = new Date().setHours(0, 0, 0, 0);
+
+    if (challengeDate === today && !challenge.completed) {
+      if (challenge.challengerSteps >= targetSteps || challenge.recipientSteps >= targetSteps) {
+        challenge.completed = true;
+        
+        // Determine winner
+        let winner;
+        if (challenge.challengerSteps >= targetSteps && challenge.recipientSteps >= targetSteps) {
+          winner = challenge.challengerSteps > challenge.recipientSteps ? challenge.challenger : challenge.recipient;
+        } else {
+          winner = challenge.challengerSteps >= targetSteps ? challenge.challenger : challenge.recipient;
+        }
+        
+        challenge.winner = winner;
+        challenge.status = 'completed';
+        
+        // Update tokens
+        const loser = winner === challenge.challenger ? challenge.recipient : challenge.challenger;
+        const winnerUser = await User.findOne({ email: winner });
+        const loserUser = await User.findOne({ email: loser });
+        
+        if (winnerUser && loserUser) {
+          winnerUser.totalTokens += challenge.tokens;
+          loserUser.totalTokens = Math.max(0, loserUser.totalTokens - challenge.tokens);
+          
+          await winnerUser.save();
+          await loserUser.save();
+        }
+      }
+    }
+
+    await challenge.save();
+    res.json({ 
+      message: 'Challenge progress updated',
+      challenge,
+      completed: challenge.completed,
+      winner: challenge.winner
+    });
+  } catch (error) {
+    console.error('Error updating challenge steps:', error);
+    res.status(500).json({ error: 'Failed to update challenge progress' });
+  }
+});
+
+app.post('/decline-accepted-challenge', async (req, res) => {
+  const { challengeId, userEmail } = req.body;
+
+  try {
+    const challenge = await Challenge.findById(challengeId);
+    
+    if (!challenge) {
+      return res.status(404).json({ error: 'Challenge not found' });
+    }
+
+    // Verify the user is either the challenger or recipient
+    if (challenge.challenger !== userEmail && challenge.recipient !== userEmail) {
+      return res.status(403).json({ error: 'Unauthorized to decline this challenge' });
+    }
+
+    // Only allow declining accepted challenges
+    if (challenge.status !== 'accepted') {
+      return res.status(400).json({ error: 'Can only decline accepted challenges' });
+    }
+
+    // Set challenge status to 'declined' and save who declined it
+    challenge.status = 'declined';
+    challenge.declinedBy = userEmail;
+    challenge.declinedAt = new Date();
+    
+    await challenge.save();
+
+    res.json({ 
+      message: 'Challenge declined successfully',
+      challenge
+    });
+  } catch (error) {
+    console.error('Error declining accepted challenge:', error);
+    res.status(500).json({ error: 'Failed to decline challenge' });
+  }
+});
+
+app.delete('/delete-challenge/:challengeId/:userEmail', async (req, res) => {
+  const { challengeId, userEmail } = req.params;
+
+  try {
+    const challenge = await Challenge.findById(challengeId);
+    
+    if (!challenge) {
+      return res.status(404).json({ error: 'Challenge not found' });
+    }
+
+    // Verify the user is either the challenger or recipient
+    if (challenge.challenger !== userEmail && challenge.recipient !== userEmail) {
+      return res.status(403).json({ error: 'Unauthorized to delete this challenge' });
+    }
+
+    // Add a deletedFor array to track who has deleted the challenge
+    if (!challenge.deletedFor) {
+      challenge.deletedFor = [];
+    }
+
+    // Add this user to the deletedFor array if not already there
+    if (!challenge.deletedFor.includes(userEmail)) {
+      challenge.deletedFor.push(userEmail);
+      await challenge.save();
+    }
+
+    res.json({ 
+      message: 'Challenge deleted successfully',
+      challenge
+    });
+  } catch (error) {
+    console.error('Error deleting challenge:', error);
+    res.status(500).json({ error: 'Failed to delete challenge' });
+  }
+});
+
+app.delete('/delete-all-completed/:userEmail', async (req, res) => {
+  const { userEmail } = req.params;
+
+  try {
+    const challenges = await Challenge.find({
+      $or: [
+        { challenger: userEmail },
+        { recipient: userEmail }
+      ],
+      status: 'completed'
+    });
+
+    // Add user to deletedFor array for each completed challenge
+    for (const challenge of challenges) {
+      if (!challenge.deletedFor) {
+        challenge.deletedFor = [];
+      }
+      if (!challenge.deletedFor.includes(userEmail)) {
+        challenge.deletedFor.push(userEmail);
+        await challenge.save();
+      }
+    }
+
+    res.json({ 
+      message: 'All completed challenges deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting all completed challenges:', error);
+    res.status(500).json({ error: 'Failed to delete challenges' });
+  }
+});
 
 // Decline a challenge
 app.post('/decline-challenge', async (req, res) => {
@@ -336,7 +516,18 @@ app.post('/decline-challenge', async (req, res) => {
   }
 });
 
-
+app.get('/challenger-challenges/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const challenges = await Challenge.find({ 
+      challenger: email,
+      status: { $in: ['accepted', 'completed', 'ongoing'] }
+    });
+    res.json(challenges);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching challenger's challenges" });
+  }
+});
 
 
 app.listen(5000, () => console.log('Server running on port 5000'));

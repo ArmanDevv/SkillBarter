@@ -13,7 +13,14 @@ const challengeSchema = new mongoose.Schema({
     type: String, 
     enum: ['pending', 'accepted', 'declined', 'completed' , 'ongoing'],
     default: 'pending',
-  } // pending, accepted, declined
+  }, // pending, accepted, declined
+  completed: { type: Boolean, default: false },
+  winner: { type: String, default: null },
+  challengerSteps: { type: Number, default: 0 },
+  recipientSteps: { type: Number, default: 0 },
+  startTime: { type: Date },
+  endTime: { type: Date },
+  deletedFor: [String]
 });
 
 const Challenge = mongoose.model('Challenge', challengeSchema);

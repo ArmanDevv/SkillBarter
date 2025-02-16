@@ -8,9 +8,10 @@ const challengeSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now },
   steps : {type : Number , required : true} ,
   tokens : {type : Number , required : true},
+  notifications : {type : String},
   status: { 
     type: String, 
-    enum: ['pending', 'accepted', 'declined', 'completed'],
+    enum: ['pending', 'accepted', 'declined', 'completed' , 'ongoing'],
     default: 'pending',
   } // pending, accepted, declined
 });

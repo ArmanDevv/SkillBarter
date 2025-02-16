@@ -9,10 +9,52 @@ const ProfilePage = () => {
   const [challengeRequests, setChallengeRequests] = useState([]);
   const [pastChallenges, setPastChallenges] = useState([]);
 
-  const handleAccept = (challenge) => {
-    setPastChallenges(prev => [...prev, { ...challenge, status: 'Accepted' }]);
-    setChallengeRequests(prev => prev.filter(req => req.id !== challenge.id));
+  const handleAccept = async (challenge) => {
+    console.log("Challenge ID:", challenge._id); // Debugging
+  
+    if (!challenge._id) {
+      console.error("Error: challenge._id is undefined");
+      return;
+    }
+  
+    try {
+      const response = await fetch(`http://localhost:5000/accept-challenge/${challenge._id}`, {  
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+  
+      if (response.ok) {
+        setPastChallenges(prev => [...prev, { ...challenge, status: 'accepted' }]);
+        setChallengeRequests(prev => prev.filter(req => req._id !== challenge._id));
+      } else {
+        console.error("Error: Server response not OK");
+      }
+    } catch (error) {
+      console.error("Error accepting challenge:", error);
+    }
   };
+  
+ const handleDecline = async (challenge) => {
+  try {
+    const response = await fetch(`http://localhost:5000/decline-challenge`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ challengeId: challenge._id }),
+    });
+
+    if (response.ok) {
+      setChallengeRequests((prev) => prev.filter((req) => req._id !== challenge._id));
+
+      console.log("Challenger (A) has been notified about the decline.");
+    } else {
+      console.error("Error: Decline request failed.");
+    }
+  } catch (error) {
+    console.error('Error declining challenge:', error);
+  }
+};
+
+  
 
   useEffect(() => {
     const fetchTokens = async () => {
@@ -37,10 +79,17 @@ const ProfilePage = () => {
       const email = localStorage.getItem('email');
       if (email) {
         try {
-          const response = await fetch(`http://localhost:5000/incoming-challenges/${email}`);
-          if (response.ok) {
-            const challenges = await response.json();
+          const responsePending = await fetch(`http://localhost:5000/incoming-challenges/${email}`);
+          if (responsePending.ok) {
+            const challenges = await responsePending.json();
             setChallengeRequests(challenges);
+          }
+  
+          // Fetch accepted challenges (upcoming)
+          const responseAccepted = await fetch(`http://localhost:5000/upcoming-challenges/${email}`);
+          if (responseAccepted.ok) {
+            const acceptedChallenges = await responseAccepted.json();
+            setPastChallenges(acceptedChallenges); // Storing accepted ones in pastChallenges for now
           }
         } catch (error) {
           console.error('Error fetching challenges:', error);
@@ -141,11 +190,11 @@ const ProfilePage = () => {
             ) : (
               <div className="space-y-4">
                 {challengeRequests.map((request) => (
-                  <div key={request.id} className="flex items-center justify-between">
+                  <div key={request._id} className="flex items-center justify-between">
                     <div>Heyy!! You are challenged <br/> Challenger : {request.challenger} <br/> Steps : {request.steps} <br/> Tokens on Stake : {request.tokens} <br/> Challenge Date : {request.date.split('T')[0]}</div>
                     <div className="flex gap-2">
                       <button onClick={() => handleAccept(request)} className="px-4 py-2 bg-purple-600 rounded-lg">Accept</button>
-                      <button className="px-4 py-2 bg-gray-700 rounded-lg">Decline</button>
+                      <button onClick={() => handleDecline(request)} className="px-4 py-2 bg-gray-700 rounded-lg">Decline</button>
                     </div>
                   </div>
                 ))}
@@ -167,10 +216,14 @@ const ProfilePage = () => {
                   <div key={challenge.id} className="p-4 bg-gray-800 rounded-lg">
                     <div className="flex justify-between items-center">
                       <div>
-                      <p>You Accepted the challenge by {challenge.challenger}</p>
+                      {challenge.status === 'declined' ? (
+                        <p>You declined a challenge from {challenge.challenger}</p>
+                          ) : (
+                        <p>You accepted a challenge from {challenge.challenger}</p>
+                       )}
                         <h3 className="font-semibold">Steps : {challenge.steps}</h3>
                         <h3 className="font-semibold">Tokens on stake : {challenge.tokens}</h3>
-                        <p className="text-sm text-gray-400">Challenge On : {challenge.date}</p>
+                        <p className="text-sm text-gray-400">Challenge On : {challenge.date.split('T')[0]}</p>
                       </div>
                       <span className={`px-3 py-1 rounded-full text-sm ${
                         challenge.status === 'completed' ? 'bg-green-900 text-green-300' : 

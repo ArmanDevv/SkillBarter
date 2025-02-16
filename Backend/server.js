@@ -277,6 +277,66 @@ app.get('/incoming-challenges/:email', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch incoming challenges' });
   }
 });
+app.get('/upcoming-challenges/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const challenges = await Challenge.find({ recipient: email, status: "accepted" });
+    res.json(challenges);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching upcoming challenges" });
+  }
+});
+
+// Accept a challenge
+// Accept a challenge (Fixed)
+app.post('/accept-challenge/:id', async (req, res) => {
+  const { id } = req.params; // Get ID from URL parameter
+
+  try {
+    const challenge = await Challenge.findById(id);
+
+    if (!challenge) {
+      return res.status(404).json({ error: 'Challenge not found' });
+    }
+
+    // Update challenge status to 'Accepted'
+    challenge.status = 'accepted';
+    await challenge.save();
+
+    res.json({ message: 'Challenge accepted successfully!', challenge });
+  } catch (error) {
+    console.error('Error accepting challenge:', error);
+    res.status(500).json({ error: 'Failed to accept challenge' });
+  }
+});
+
+
+// Decline a challenge
+app.post('/decline-challenge', async (req, res) => {
+  const { challengeId } = req.body;
+
+  try {
+    const challenge = await Challenge.findById(challengeId);
+    if (!challenge) {
+      return res.status(404).json({ error: 'Challenge not found' });
+    }
+
+    // Update challenge status instead of deleting it
+    challenge.status = 'declined';
+
+    // Store notification inside the challenge
+    challenge.notifications = `${challenge.recipient} declined your challenge.`;
+
+    await challenge.save();
+
+    res.json({ message: 'Challenge declined successfully!', challenge });
+  } catch (error) {
+    console.error('Error declining challenge:', error);
+    res.status(500).json({ error: 'Failed to decline challenge' });
+  }
+});
+
+
 
 
 app.listen(5000, () => console.log('Server running on port 5000'));

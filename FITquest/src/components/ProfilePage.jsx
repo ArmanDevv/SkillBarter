@@ -1,5 +1,7 @@
 import React, { useState,useEffect } from 'react';
+
 const ProfilePage = () => {
+
   const [tokens, setTokens] = useState({ today: 0, total: 0 });
   const [stepsGoal, setStepsGoal] = useState(() => {
     return parseInt(localStorage.getItem('stepsGoal')) || 5000;
@@ -113,7 +115,11 @@ const ProfilePage = () => {
                 max="10000"
                 step="500"
                 value={stepsGoal}
-                onChange={(e) => setStepsGoal(Number(e.target.value))}
+                onChange={(e)=>{
+                        const newGoal= Number(e.target.value);
+                        setStepsGoal(newGoal);
+                        localStorage.setItem('stepsGoal',newGoal);
+                }}      
                 className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
               />
               <div className="flex justify-between text-sm text-gray-400">

@@ -6,7 +6,7 @@ import { LoadScript, GoogleMap, Marker, InfoWindow } from '@react-google-maps/ap
 const PlayerMap = () => {
   const [players, setPlayers] = useState([]);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
+  // const [mapLoaded, setMapLoaded] = useState(false);
 
   const mapContainerStyle = {
     width: '100%',

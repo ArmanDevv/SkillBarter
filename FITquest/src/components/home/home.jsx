@@ -49,18 +49,15 @@ const [challengeDetails, setChallengeDetails] = useState({
 });
 
 const [selectedUserStats, setSelectedUserStats] = useState(null);
-const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
 
-// Add this handler function
 const handleNameClick = (user, event) => {
   event.stopPropagation();
-  const rect = event.target.getBoundingClientRect();
-  setPopupPosition({
-    x: rect.right-20, //sition 10px to the right of the name
-    y: rect.top + (rect.height / 2) // Align with the middle of the name
-  });
   setSelectedUserStats(user);
+  console.log("Selected User Stats:", user); // Debugging log
 };
+
+
+
 
 
 
@@ -280,7 +277,6 @@ const handleNameClick = (user, event) => {
             <UserStatsPopup 
   user={selectedUserStats}
   isVisible={selectedUserStats !== null}
-  position={popupPosition}
   onClose={() => setSelectedUserStats(null)}
 />
           </div>

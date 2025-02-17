@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const UserStatsPopup = ({ user, isVisible, position, onClose }) => {
+const UserStatsPopup = ({ user, isVisible, onClose }) => {
   const [tokenData, setTokenData] = useState({ todayTokens: 0, totalTokens: 0 });
   const [loading, setLoading] = useState(true);
 
@@ -30,11 +30,8 @@ const UserStatsPopup = ({ user, isVisible, position, onClose }) => {
 
   return (
     <div 
-      className="absolute z-50 w-64 rounded-xl bg-gray-900/95 border border-gray-800 backdrop-blur-lg shadow-xl animate-fade-in"
-      style={{
-        top: `${position.y}px`,
-        left: `${position.x}px`,
-      }}
+      className="absolute  w-64 rounded-xl bg-gray-900/95 border border-gray-800 backdrop-blur-lg shadow-xl animate-fade-in z-50 top-0 left-0"
+      style={{zIndex:1000}}
     >
       <div className="p-4 space-y-3">
         <div className="flex justify-between items-center">

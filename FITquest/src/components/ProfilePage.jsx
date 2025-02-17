@@ -328,112 +328,160 @@ const ProfilePage = () => {
           </Card>
 
           {/* Past Challenges Card */}
-          <Card>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Challenge History</h2>
-              {pastChallenges.some(c => c.status === 'completed') && (
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="px-3 py-1 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg"
-                >
-                  Delete All Completed
-                </button>
-              )}
-            </div>
-            {pastChallenges.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
-                <span className="text-4xl mb-4 block">📜</span>
-                <p>No past or ongoing challenges</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {pastChallenges.map((challenge) => {
-                  const isChallenger = challenge.challenger === userEmail;
-                  const challengeDate = new Date(challenge.date).setHours(0, 0, 0, 0);
-                  const today = new Date().setHours(0, 0, 0, 0);
-                  const isToday = challengeDate === today;
-                  const isFutureDate = challengeDate > today;
 
-                  return (
-                    <div key={challenge._id} className="p-4 bg-gray-800 rounded-lg">
-                      <div className="flex flex-col space-y-2">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            {isChallenger ? (
-                              <p>Your Challenge has been accepted!</p>
-                            ) : (
-                              <p>You accepted a challenge from {challenge.challenger}</p>
-                            )}
-                            <h3 className="font-semibold">Steps: {challenge.steps}</h3>
-                            <h3 className="font-semibold">Tokens at stake: {challenge.tokens}</h3>
-                            <p className="text-sm text-gray-400">Challenge On: {challenge.date.split('T')[0]}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`px-3 py-1 rounded-full text-sm ${
-                              challenge.status === 'completed' 
-                                ? challenge.winner === userEmail 
-                                  ? 'bg-green-900 text-green-300' 
-                                  : 'bg-red-900 text-red-300'
-                                : challenge.status === 'ongoing' 
-                                  ? 'bg-blue-900 text-blue-300' 
-                                  : 'bg-gray-900 text-gray-300'
-                            }`}>
-                              {challenge.status === 'completed' 
-                                ? challenge.winner === userEmail 
-                                  ? 'Won' 
-                                  : 'Lost'
-                                : challenge.status}
-                            </span>
-                            {challenge.status === 'accepted' && isFutureDate && (
-                              <button
-                                onClick={() => handleDeclineAccepted(challenge._id)}
-                                className="px-3 py-1 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-md transition-transform hover:scale-105"
-                              >
-                                Decline
-                              </button>
-                            )}
-                            {challenge.status === 'completed' && (
-                              <button
-                                onClick={() => handleDeleteChallenge(challenge._id)}
-                                className="px-3 py-1 text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 rounded-lg"
-                              >
-                                Delete
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                        {challenge.status === 'accepted' && isToday && (
-                          <ChallengeProgress challenge={challenge} userEmail={userEmail} />
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+          {/* Past Challenges Card */}
+<Card>
+  <div className="flex justify-between items-center mb-4">
+    <h2 className="text-xl font-semibold">Challenge History</h2>
+    {pastChallenges.some(c => c.status === 'completed') && (
+      <button
+        onClick={() => setShowDeleteConfirm(true)}
+        className="px-3 py-1 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg"
+      >
+        Delete All Completed
+      </button>
+    )}
+  </div>
+  {pastChallenges.length === 0 ? (
+    <div className="text-center py-8 text-gray-400">
+      <span className="text-4xl mb-4 block">📜</span>
+      <p>No past or ongoing challenges</p>
+    </div>
+  ) : (
+    <div className="h-96 overflow-y-auto scrollbar-hide space-y-4" style={{ scrollBehavior: 'smooth' }}>
+      {[...pastChallenges]
+        .sort((a, b) => {
+          // Custom sorting function
+          const getStatusPriority = (status) => {
+            switch (status) {
+              case 'ongoing': return 1;
+              case 'accepted': return 2;
+              case 'completed': return 3;
+              default: return 4;
+            }
+          };
+          
+          // First sort by status priority
+          const statusDiff = getStatusPriority(a.status) - getStatusPriority(b.status);
+          if (statusDiff !== 0) return statusDiff;
+          
+          // Then sort by date (newer first)
+          return new Date(b.date) - new Date(a.date);
+        })
+        .map((challenge) => {
+          const isChallenger = challenge.challenger === userEmail;
+          const challengeDate = new Date(challenge.date).setHours(0, 0, 0, 0);
+          const today = new Date().setHours(0, 0, 0, 0);
+          const isToday = challengeDate === today;
+          const isFutureDate = challengeDate > today;
+
+          const handleDeclineAccepted = async () => {
+            try {
+              const response = await fetch('http://localhost:5000/decline-accepted-challenge', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  challengeId: challenge._id,
+                  userEmail
+                })
+              });
+
+              if (response.ok) {
+                setPastChallenges(prev => prev.filter(c => c._id !== challenge._id));
+              } else {
+                const data = await response.json();
+                console.error('Error:', data.error);
+              }
+            } catch (error) {
+              console.error('Error declining accepted challenge:', error);
+            }
+          };
+
+          return (
+            <div 
+              key={challenge._id} 
+              className="p-4 bg-gray-800 rounded-lg transition-all duration-300 hover:bg-gray-700"
+            >
+              <div className="flex flex-col space-y-2">
+                <div className="flex justify-between items-center">
+                  <div>
+                    {isChallenger ? (
+                      <p>Your Challenge has been accepted!</p>
+                    ) : (
+                      <p>You accepted a challenge from {challenge.challenger}</p>
+                    )}
+                    <h3 className="font-semibold">Steps: {challenge.steps}</h3>
+                    <h3 className="font-semibold">Tokens at stake: {challenge.tokens}</h3>
+                    <p className="text-sm text-gray-400">Challenge On: {challenge.date.split('T')[0]}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-3 py-1 rounded-full text-sm ${
+                      challenge.status === 'completed' 
+                        ? challenge.winner === userEmail 
+                          ? 'bg-green-900 text-green-300' 
+                          : 'bg-red-900 text-red-300'
+                        : challenge.status === 'ongoing' 
+                          ? 'bg-blue-900 text-blue-300' 
+                          : 'bg-gray-900 text-gray-300'
+                    }`}>
+                      {challenge.status === 'completed' 
+                        ? challenge.winner === userEmail 
+                          ? 'Won' 
+                          : 'Lost'
+                        : challenge.status}
+                    </span>
+                    {challenge.status === 'accepted' && isFutureDate && (
+                      <button
+                        onClick={() => handleDeclineAccepted(challenge._id)}
+                        className="px-3 py-1 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-md transition-transform hover:scale-105"
+                      >
+                        Decline
+                      </button>
+                    )}
+                    {challenge.status === 'completed' && (
+                      <button
+                        onClick={() => handleDeleteChallenge(challenge._id)}
+                        className="px-3 py-1 text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 rounded-lg"
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {challenge.status === 'accepted' && isToday && (
+                  <ChallengeProgress challenge={challenge} userEmail={userEmail} />
+                )}
               </div>
-            )}
-          </Card>
-          {showDeleteConfirm && (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-800 p-6 rounded-lg shadow-xl">
-        <h3 className="text-lg font-semibold mb-4">Delete All Completed Challenges?</h3>
-        <p className="text-gray-300 mb-4">This action cannot be undone.</p>
-        <div className="flex justify-end space-x-4">
-          <button
-            onClick={() => setShowDeleteConfirm(false)}
-            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleDeleteAllCompleted}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg"
-          >
-            Delete All
-          </button>
-        </div>
-      </div>
+            </div>
+          );
+        })}
     </div>
   )}
+</Card>
+          
+{showDeleteConfirm && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-gray-800 p-6 rounded-lg shadow-xl">
+      <h3 className="text-lg font-semibold mb-4">Delete All Completed Challenges?</h3>
+      <p className="text-gray-300 mb-4">This action cannot be undone.</p>
+      <div className="flex justify-end space-x-4">
+        <button
+          onClick={() => setShowDeleteConfirm(false)}
+          className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleDeleteAllCompleted}
+          className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg"
+        >
+          Delete All
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
         </div>
       </div>

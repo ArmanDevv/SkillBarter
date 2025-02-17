@@ -5,6 +5,7 @@ import PlayerMap from '../PlayerMap';
 import "./home.css" 
 import ProfilePage from '../ProfilePage';
 import ChallengeModal from '../ChallengeModal';
+import UserStatsPopup from '../UserStatsPopup';
 
 
 // Card components remain the same...
@@ -32,6 +33,8 @@ const CardContent = ({ children }) => (
   </div>
 );
 
+
+
 const Home = () => {
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [showProfile, setShowProfile] = useState(false);
@@ -44,6 +47,21 @@ const [challengeDetails, setChallengeDetails] = useState({
   steps: '',
   tokens: ''
 });
+
+const [selectedUserStats, setSelectedUserStats] = useState(null);
+const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
+
+// Add this handler function
+const handleNameClick = (user, event) => {
+  event.stopPropagation();
+  const rect = event.target.getBoundingClientRect();
+  setPopupPosition({
+    x: rect.right-20, //sition 10px to the right of the name
+    y: rect.top + (rect.height / 2) // Align with the middle of the name
+  });
+  setSelectedUserStats(user);
+};
+
 
 
   const getStepsGoal = () => {
@@ -195,7 +213,12 @@ const [challengeDetails, setChallengeDetails] = useState({
                         {user.rank}
                       </div>
                       <div>
-                        <p className="font-medium text-gray-100">{user.name}</p>
+                        <p 
+                          className="font-medium text-gray-100 cursor-pointer hover:text-fuchsia-400 transition-colors"
+                          onClick={(e) => handleNameClick(user, e)}
+                        >
+                          {user.name}
+                        </p>
                         {user.email === userEmail && (
                           <div className="text-xs text-fuchsia-400">That's you!</div>
                         )}
@@ -211,25 +234,25 @@ const [challengeDetails, setChallengeDetails] = useState({
                         <p className="text-lg font-semibold text-gray-100">{parseFloat(user.calories).toFixed(0)}</p>
                       </div>
                       {user.email !== userEmail && (
-  <button
-    onClick={(e) => {
-      e.stopPropagation();
-      handleChallenge(user);
-    }}
-    disabled={user.challengeStatus === 'pending' || user.challengeStatus === 'accepted'}
-    className={`px-3 py-1 text-sm font-medium text-white rounded-lg shadow-md transition-transform hover:scale-105 ${
-      user.challengeStatus === 'pending' 
-        ? 'bg-gray-600 cursor-not-allowed'
-        : user.challengeStatus === 'accepted'
-        ? 'bg-green-600 cursor-not-allowed'
-        : 'bg-blue-600 hover:bg-blue-700'
-    }`}
-  >
-    {user.challengeStatus === 'pending' ? 'Challenge Pending' :
-     user.challengeStatus === 'accepted' ? 'Challenge Accepted' :
-     'Challenge'}
-  </button>
-)}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleChallenge(user);
+                          }}
+                          disabled={user.challengeStatus === 'pending' || user.challengeStatus === 'accepted'}
+                          className={`px-3 py-1 text-sm font-medium text-white rounded-lg shadow-md transition-transform hover:scale-105 ${
+                            user.challengeStatus === 'pending' 
+                              ? 'bg-gray-600 cursor-not-allowed'
+                              : user.challengeStatus === 'accepted'
+                              ? 'bg-green-600 cursor-not-allowed'
+                              : 'bg-blue-600 hover:bg-blue-700'
+                          }`}
+                        >
+                          {user.challengeStatus === 'pending' ? 'Challenge Pending' :
+                          user.challengeStatus === 'accepted' ? 'Challenge Accepted' :
+                          'Challenge'}
+                        </button>
+                      )}
                       {user.email === userEmail && (
                         <div className="flex flex-col space-y-2 items-end">
                           <div className="w-22">
@@ -254,6 +277,12 @@ const [challengeDetails, setChallengeDetails] = useState({
                 </div>
               );
             })}
+            <UserStatsPopup 
+  user={selectedUserStats}
+  isVisible={selectedUserStats !== null}
+  position={popupPosition}
+  onClose={() => setSelectedUserStats(null)}
+/>
           </div>
         </div>
       </div>

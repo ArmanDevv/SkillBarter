@@ -23,8 +23,8 @@ const ChallengeModal = ({ isOpen, onClose, onSubmit, selectedUser }) => {
 
   return (
     <div style={modalStyles.overlay}>
-      <div className="bg-white p-6 rounded-lg shadow-lg w-80 text-center">
-      <h2 className="text-2xl font-bold text-green-600 mb-4">Challenge <span className='text-red-500 font-medium'>{selectedUser?.name}</span></h2>
+      <div className="bg-black p-6 rounded-lg shadow-lg w-80 text-center">
+      <h2 className="text-2xl font-bold text-blue-600 mb-4">Challenge <span className='text-fuchsia-600 font-medium'>{selectedUser?.name}</span></h2>
 
         
         <input
@@ -35,7 +35,7 @@ const ChallengeModal = ({ isOpen, onClose, onSubmit, selectedUser }) => {
           onFocus={() => setIsDateFocused(true)}
           onBlur={() => setIsDateFocused(challengeDetails.date !== '')}
           onChange={handleChange}
-          className="w-full p-2 mb-3 border rounded text-black"
+          className="w-full p-2 mb-3 border rounded text-white"
         />
 
         <input
@@ -43,7 +43,7 @@ const ChallengeModal = ({ isOpen, onClose, onSubmit, selectedUser }) => {
           type="number"
           placeholder="Enter Steps"
           onChange={handleChange}
-          className="w-full p-2 mb-3 border rounded text-black"
+          className="w-full p-2 mb-3 border rounded text-white"
         />
 
         <input
@@ -51,18 +51,18 @@ const ChallengeModal = ({ isOpen, onClose, onSubmit, selectedUser }) => {
           type="number"
           placeholder="Enter Tokens"
           onChange={handleChange}
-          className="w-full p-2 mb-3 border rounded text-black"
+          className="w-full p-2 mb-3 border rounded text-white"
         />
 
         <button 
           onClick={handleSubmit} 
-          className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded m-2"
+          className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded m-2"
         >
           Send Challenge
         </button>
         <button 
           onClick={onClose} 
-          className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded m-2"
+          className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white py-2 px-4 rounded m-2"
         >
           Close
         </button>

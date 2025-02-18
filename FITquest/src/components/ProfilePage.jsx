@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TokenCashing from './TokenCashout';
+import AvatarSelector from './AvatarSelector';
+
 
 const ProfilePage = () => {
   const [tokens, setTokens] = useState({ today: 0, total: 0 });
@@ -338,6 +340,8 @@ const ProfilePage = () => {
             )}
           </Card>
 
+          
+
           {/* Past Challenges Card */}
 
           {/* Past Challenges Card */}
@@ -492,6 +496,12 @@ const ProfilePage = () => {
     </div>
   </div>
 )}
+
+<Card>
+          <div className="max-w-2xl mx-auto">
+  <AvatarSelector />
+</div>
+          </Card>
 
 
         </div>

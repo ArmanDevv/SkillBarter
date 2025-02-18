@@ -89,7 +89,29 @@ app.post('/save-fitness-data', async (req, res) => {
       res.status(500).json({ error: 'Failed to fetch tokens' });
     }
   });
+
+
+  app.post('/update-avatar', async (req, res) => {
+    const { email, avatarId } = req.body;
   
+    try {
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+  
+      user.avatarId = avatarId;
+      await user.save();
+  
+      res.status(200).json({ 
+        message: 'Avatar updated successfully',
+        avatarId: user.avatarId 
+      });
+    } catch (error) {
+      console.error('Error updating avatar:', error);
+      res.status(500).json({ error: 'Failed to update avatar' });
+    }
+  });
 
 // Exchange Auth Code for Tokens
 app.post('/exchange-code', async (req, res) => {
@@ -174,7 +196,8 @@ app.get('/players-location', async (req, res) => {
       longitude: user.longitude,
       steps: user.steps,
       calories: user.calories,
-      profilePicture: user.profilePicture
+      profilePicture: user.profilePicture,
+      avatarId: user.avatarId
     }));
     
     console.log('Sending players location:', playersLocation);

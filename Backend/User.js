@@ -20,6 +20,10 @@ const userSchema = new mongoose.Schema({
   latitude: Number,
   longitude: Number,
   profilePicture: String,
+  avatarId: {
+    type: String,
+    default: 'avatar1' // You can set any default avatar ID you want
+  },
   todayTokens: { type: Number, default: 0 },
   totalTokens: { type: Number, default: 0 },
   paymentHistory: [{

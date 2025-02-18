@@ -21,7 +21,13 @@ const userSchema = new mongoose.Schema({
   longitude: Number,
   profilePicture: String,
   todayTokens: { type: Number, default: 0 },
-  totalTokens: { type: Number, default: 0 }
+  totalTokens: { type: Number, default: 0 },
+  paymentHistory: [{
+    amount: Number,
+    tokens: Number,
+    transactionId: String,
+    timestamp: Date
+  }]
 });
 
 const User = mongoose.model('User', userSchema);

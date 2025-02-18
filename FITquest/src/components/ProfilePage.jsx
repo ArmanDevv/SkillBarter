@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import TokenCashing from './TokenCashout';
 
 const ProfilePage = () => {
   const [tokens, setTokens] = useState({ today: 0, total: 0 });
@@ -9,6 +10,7 @@ const ProfilePage = () => {
   const [pastChallenges, setPastChallenges] = useState([]);
   const userEmail = localStorage.getItem('email');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCashout, setShowCashout] = useState(false);
 
   const handleDeleteChallenge = async (challengeId) => {
     try {
@@ -239,11 +241,14 @@ const ProfilePage = () => {
   );
 
   return (
+    
     <div className="min-h-screen bg-[#0a0a0f] text-white p-8">
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Tokens Card */}
           <Card>
+            {!showCashout ? (
+            <div>  
             <h2 className="text-xl font-semibold mb-4">Tokens Earned</h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -260,14 +265,20 @@ const ProfilePage = () => {
               <div className="pt-4 border-t border-gray-800">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-400">Total Tokens Earned</span>
-                  <span className="text-2xl font-bold">{tokens.total}</span>
+                  <span className="text-2xl font-bold mr-5">{tokens.total}</span>
                 </div>
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm">
+              <div className="flex items-center justify-between">
+                <div>
                 <p>• Earn 10 tokens per 1,000 steps</p>
-                <p>• Earn 10 tokens per 500 calories burned</p>
+                <p>• Earn 10 tokens per 500 calories burned</p></div>
+                <button onClick={() => setShowCashout(true)} className="px-4 py-2 bg-purple-600 rounded-lg">Cash Out 💰</button>                
+              </div>
               </div>
             </div>
+            </div> ) : (<TokenCashing/>)}
+            
           </Card>
 
           {/* Steps Goal Card */}

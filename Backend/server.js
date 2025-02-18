@@ -529,5 +529,81 @@ app.get('/challenger-challenges/:email', async (req, res) => {
   }
 });
 
+// Add these endpoints to your server.js
+
+// Add a new route to handle token cashout
+app.post('/cashout-tokens', async (req, res) => {
+  const { email, tokensToRedeem } = req.body;
+
+  try {
+    // Find the user
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if user has enough tokens
+    if (user.totalTokens < tokensToRedeem) {
+      return res.status(400).json({ error: 'Insufficient tokens' });
+    }
+
+    // Calculate payment amount (1 token = 0.1 rupees)
+    const paymentAmount = (tokensToRedeem * 0.1).toFixed(2);
+
+    // In a real system, you would integrate with a payment gateway here
+    // For testing, we'll just simulate a successful payment
+    const paymentDetails = {
+      amount: paymentAmount,
+      currency: 'INR',
+      status: 'success',
+      timestamp: new Date(),
+      transactionId: 'TEST_' + Math.random().toString(36).substr(2, 9)
+    };
+
+    // Deduct tokens from user's account
+    user.totalTokens -= tokensToRedeem;
+    await user.save();
+
+    // Store payment history in user document
+    if (!user.paymentHistory) {
+      user.paymentHistory = [];
+    }
+    
+    user.paymentHistory.push({
+      amount: paymentAmount,
+      tokens: tokensToRedeem,
+      transactionId: paymentDetails.transactionId,
+      timestamp: paymentDetails.timestamp
+    });
+
+    await user.save();
+
+    res.json({
+      message: 'Cashout successful',
+      paymentDetails,
+      remainingTokens: user.totalTokens
+    });
+  } catch (error) {
+    console.error('Error processing cashout:', error);
+    res.status(500).json({ error: 'Failed to process cashout' });
+  }
+});
+
+// Add a route to get payment history
+app.get('/payment-history/:email', async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.params.email });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(user.paymentHistory || []);
+  } catch (error) {
+    console.error('Error fetching payment history:', error);
+    res.status(500).json({ error: 'Failed to fetch payment history' });
+  }
+});
+
 
 app.listen(5000, () => console.log('Server running on port 5000'));

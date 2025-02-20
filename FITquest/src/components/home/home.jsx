@@ -7,8 +7,6 @@ import ProfilePage from '../ProfilePage';
 import ChallengeModal from '../ChallengeModal';
 import UserStatsPopup from '../UserStatsPopup';
 
-
-// Card components remain the same...
 const Card = ({ children, className = "" }) => (
   <div className={`rounded-xl bg-gray-900/50 border-0 backdrop-blur-md shadow-xl transition-all duration-300 ${className}`}>
     {children}
@@ -33,8 +31,6 @@ const CardContent = ({ children }) => (
   </div>
 );
 
-
-
 const Home = () => {
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [showProfile, setShowProfile] = useState(false);
@@ -56,31 +52,30 @@ const handleNameClick = (user, event) => {
   console.log("Selected User Stats:", user); // Debugging log
 };
 
+const getStepsGoal = () => {
+  return parseInt(localStorage.getItem('stepsGoal')) || 5000;
+};
 
-
-
-
-
-  const getStepsGoal = () => {
-    return parseInt(localStorage.getItem('stepsGoal')) || 5000;
-  };
-
-  const handleChallenge = async (user) => {
-    setSelectedUser(user);
-    setIsChallengeModalOpen(true);
-  };
+const handleChallenge = async (user) => {
+  setSelectedUser(user);
+  setIsChallengeModalOpen(true);
+};
   
-
   const submitChallenge = async (details) => {
     const challengerEmail = localStorage.getItem("email");
+    const challengerName = localStorage.getItem("name");
+
     const challengeData = {
       challenger: challengerEmail,
+      challengerName: challengerName,         // Add this
       recipient: selectedUser.email,
+      recipientName: selectedUser.name,       // Add this
       challengeType: "steps",
       date: details.date,
       steps: parseInt(details.steps),
       tokens: parseInt(details.tokens)
     };
+    
     console.log('challenge is for' + challengeData.steps)
     try {
       const response = await fetch("http://localhost:5000/challenge", {
@@ -100,8 +95,7 @@ const handleNameClick = (user, event) => {
       console.error("Error sending challenge:", error);
     }
   };
-  
-  
+
 
   useEffect(() => {
     const fetchLeaderboardAndChallenges = async () => {
@@ -285,7 +279,6 @@ const handleNameClick = (user, event) => {
     );  
 };
 
-  // Rest of the component remains the same...
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -326,7 +319,6 @@ const handleNameClick = (user, event) => {
             <PlayerMap/>
           </CardContent>
         </Card>
-
       </div>
       <ChallengeModal 
   isOpen={isChallengeModalOpen} 
@@ -334,10 +326,7 @@ const handleNameClick = (user, event) => {
   onSubmit={submitChallenge} 
   selectedUser={selectedUser} 
 />
-
     </div>
-    
-
   );
 };
 

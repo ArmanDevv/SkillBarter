@@ -7,101 +7,86 @@ import { avatars } from './AvatarSelector';
 // Custom map style - Light modern theme
 const mapStyle = [
   {
-    "featureType": "water",
-    "elementType": "geometry",
+    "featureType": "poi",
+    "elementType": "all",
     "stylers": [
       {
-        "color": "#e9e9e9"
-      },
+        "visibility": "off"
+      }
+    ]
+  },
+  {
+    "featureType": "transit",
+    "elementType": "all",
+    "stylers": [
       {
-        "lightness": 17
+        "visibility": "off"
       }
     ]
   },
   {
     "featureType": "landscape",
-    "elementType": "geometry",
+    "elementType": "all",
     "stylers": [
       {
         "color": "#f5f5f5"
-      },
-      {
-        "lightness": 20
       }
     ]
   },
   {
-    "featureType": "road.highway",
-    "elementType": "geometry.fill",
+    "featureType": "water",
+    "elementType": "all",
     "stylers": [
       {
-        "color": "#ffffff"
-      },
-      {
-        "lightness": 17
+        "color": "#e9e9e9"
       }
     ]
   },
   {
-    "featureType": "road.highway",
-    "elementType": "geometry.stroke",
+    "featureType": "road",
+    "elementType": "labels",
     "stylers": [
       {
-        "color": "#ffffff"
-      },
-      {
-        "lightness": 29
-      },
-      {
-        "weight": 0.2
+        "visibility": "on"
       }
     ]
   },
   {
-    "featureType": "road.arterial",
+    "featureType": "road",
     "elementType": "geometry",
     "stylers": [
       {
-        "color": "#ffffff"
+        "lightness": 100
       },
       {
-        "lightness": 18
+        "visibility": "simplified"
       }
     ]
   },
   {
-    "featureType": "road.local",
-    "elementType": "geometry",
+    "featureType": "administrative",
+    "elementType": "labels",
     "stylers": [
       {
-        "color": "#ffffff"
-      },
-      {
-        "lightness": 16
+        "visibility": "on"
       }
     ]
   },
   {
-    "featureType": "poi",
-    "elementType": "geometry",
+    "featureType": "administrative.locality",
+    "elementType": "labels.text",
     "stylers": [
       {
-        "color": "#f5f5f5"
-      },
-      {
-        "lightness": 21
+        "visibility": "on"
       }
     ]
   },
   {
-    "featureType": "poi.park",
-    "elementType": "geometry",
+    "featureType": "administrative.neighborhood",
+    "elementType": "labels.text",
     "stylers": [
       {
-        "color": "#dedede"
-      },
-      {
-        "lightness": 21
+        "visibility": "on"
       }
     ]
   }

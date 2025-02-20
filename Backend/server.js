@@ -233,7 +233,16 @@ app.post('/refresh-token', async (req, res) => {
   }
 });
 app.post('/challenge', async (req, res) => {
-  const { challenger, recipient, challengeType, date ,steps , tokens } = req.body;
+  const { 
+    challenger,
+    challengerName,    // Add this
+    recipient,
+    recipientName,     // Add this
+    challengeType,
+    date,
+    steps,
+    tokens 
+  } = req.body;
 
   try {
     // Check if there's already a pending challenge between these users
@@ -252,7 +261,9 @@ app.post('/challenge', async (req, res) => {
 
     const newChallenge = new Challenge({
       challenger,
+      challengerName,    // Add this
       recipient,
+      recipientName,     // Add this
       challengeType,
       date,
       steps,
@@ -528,7 +539,7 @@ app.post('/decline-challenge', async (req, res) => {
     challenge.status = 'declined';
 
     // Store notification inside the challenge
-    challenge.notifications = `${challenge.recipient} declined your challenge.`;
+    challenge.notifications = `${challenge.recipientName} declined your challenge.`;
 
     await challenge.save();
 

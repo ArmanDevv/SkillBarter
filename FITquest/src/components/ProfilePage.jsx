@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TokenCashing from './TokenCashout';
 import AvatarSelector from './AvatarSelector';
+import { ArrowLeft } from 'lucide-react';
 
 
 const ProfilePage = () => {
@@ -146,7 +147,7 @@ const ProfilePage = () => {
         <div className="space-y-2">
           <div>
             <p className="text-xs text-gray-400">
-              {challenge.challenger} ({progress.challengerSteps}/{targetSteps} steps)
+              {challenge.challengerName} ({progress.challengerSteps}/{targetSteps} steps)
             </p>
             <div className="w-full bg-gray-700 rounded-full h-2">
               <div
@@ -157,7 +158,7 @@ const ProfilePage = () => {
           </div>
           <div>
             <p className="text-xs text-gray-400">
-              {challenge.recipient} ({progress.recipientSteps}/{targetSteps} steps)
+              {challenge.recipientName} ({progress.recipientSteps}/{targetSteps} steps)
             </p>
             <div className="w-full bg-gray-700 rounded-full h-2">
               <div
@@ -279,37 +280,72 @@ const ProfilePage = () => {
               </div>
               </div>
             </div>
-            </div> ) : (<TokenCashing/>)}
+            </div> ) : (
+                <div>
+              <button onClick={() => setShowCashout(false)} className="text-gray-400 hover:text-gray-100">
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <TokenCashing/>
+              </div>
+              )}
             
           </Card>
 
           {/* Steps Goal Card */}
-          <Card>
-            <h2 className="text-xl font-semibold mb-4">Daily Steps Goal</h2>
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <span>Current Goal: {stepsGoal.toLocaleString()} steps</span>
-              </div>
-              <input
-                type="range"
-                min="500"
-                max="10000"
-                step="500"
-                value={stepsGoal}
-                onChange={(e) => {
-                  const newGoal = Number(e.target.value);
-                  setStepsGoal(newGoal);
-                  localStorage.setItem('stepsGoal', newGoal);
-                }}
-                className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-              />
-              <div className="flex justify-between text-sm text-gray-400">
-                <span>500</span>
-                <span>7,500</span>
-                <span>10,000</span>
-              </div>
-            </div>
-          </Card>
+          {/* Steps Goal Card */}
+<Card>
+  <h2 className="text-xl font-semibold mb-4">Daily Steps Goal</h2>
+  <div className="space-y-4">
+    <div className="flex justify-between">
+      <span className="text-lg font-medium">{stepsGoal.toLocaleString()} steps</span>
+    </div>
+    <div className="relative py-4">
+      <input
+        type="range"
+        min="500"
+        max="10000"
+        step="100"
+        value={stepsGoal}
+        onChange={(e) => {
+          const newGoal = Math.round(Number(e.target.value) / 100) * 100;
+          setStepsGoal(newGoal);
+          localStorage.setItem('stepsGoal', newGoal);
+        }}
+        className="absolute top-1/2 -translate-y-1/2 w-full h-1 bg-gray-700 rounded-full appearance-none cursor-pointer
+          before:absolute before:top-1/2 before:-translate-y-1/2 before:h-1 before:bg-purple-600 before:rounded-full
+          [&::-webkit-slider-thumb]:appearance-none
+          [&::-webkit-slider-thumb]:relative
+          [&::-webkit-slider-thumb]:w-6
+          [&::-webkit-slider-thumb]:h-6
+          [&::-webkit-slider-thumb]:bg-purple-600
+          [&::-webkit-slider-thumb]:rounded-full
+          [&::-webkit-slider-thumb]:border-4
+          [&::-webkit-slider-thumb]:border-gray-800
+          [&::-webkit-slider-thumb]:shadow-lg
+          [&::-webkit-slider-thumb]:cursor-grab
+          [&::-webkit-slider-thumb]:active:cursor-grabbing
+          [&::-webkit-slider-thumb]:hover:bg-purple-500
+          [&::-webkit-slider-thumb]:transition-colors
+          [&::-moz-range-thumb]:w-6
+          [&::-moz-range-thumb]:h-6
+          [&::-moz-range-thumb]:bg-purple-600
+          [&::-moz-range-thumb]:border-4
+          [&::-moz-range-thumb]:border-gray-800
+          [&::-moz-range-thumb]:rounded-full
+          [&::-moz-range-thumb]:shadow-lg
+          [&::-moz-range-thumb]:cursor-grab
+          [&::-moz-range-thumb]:active:cursor-grabbing
+          [&::-moz-range-thumb]:hover:bg-purple-500
+          [&::-moz-range-thumb]:transition-colors"
+      />
+    </div>
+    <div className="flex justify-between text-sm text-gray-400">
+      <span>500</span>
+      <span>5,000</span>
+      <span>10,000</span>
+    </div>
+  </div>
+</Card>
 
           {/* Challenge Requests Card */}
           <Card>
@@ -325,7 +361,7 @@ const ProfilePage = () => {
                   <div key={request._id} className="flex items-center justify-between">
                     <div>
                       Heyy!! You are challenged <br/> 
-                      Challenger: {request.challenger} <br/> 
+                      Challenger: {request.challengerName} <br/> 
                       Steps: {request.steps} <br/> 
                       Tokens on Stake: {request.tokens} <br/> 
                       Challenge Date: {request.date.split('T')[0]}
@@ -420,11 +456,11 @@ const ProfilePage = () => {
               <div className="flex flex-col space-y-2">
                 <div className="flex justify-between items-center">
                   <div>
-                    {isChallenger ? (
-                      <p>Your Challenge has been accepted!</p>
-                    ) : (
-                      <p>You accepted a challenge from {challenge.challenger}</p>
-                    )}
+                  {isChallenger ? (
+    <p>Your Challenge has been accepted by {challenge.recipientName}!</p>
+  ) : (
+    <p>You accepted a challenge from {challenge.challengerName}</p>
+  )}
                     <h3 className="font-semibold">Steps: {challenge.steps}</h3>
                     <h3 className="font-semibold">Tokens at stake: {challenge.tokens}</h3>
                     <p className="text-sm text-gray-400">Challenge On: {challenge.date.split('T')[0]}</p>

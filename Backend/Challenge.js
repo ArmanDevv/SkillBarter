@@ -2,6 +2,8 @@
 import mongoose from 'mongoose';
 
 const challengeSchema = new mongoose.Schema({
+  challengerName: { type: String, required: true },
+  recipientName: { type: String, required: true },
   challenger: { type: String, required: true }, // challenger's email
   recipient: { type: String, required: true },  // recipient's email
   challengeType: { type: String, required: true }, // e.g., 'steps'
